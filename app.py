@@ -4,11 +4,13 @@ from flask import Flask, request, render_template, jsonify
 
 app = Flask(__name__)
 
+
 class Config:
     UPLOAD_FOLDER = "uploads"
     OUTPUT_FOLDER = "outputs"
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
-    ALLOWED_EXTENSIONS = {'mp4', 'avi', 'mov', 'webm'}
+    ALLOWED_EXTENSIONS = {"mp4", "avi", "mov", "webm"}
+
 
 app.config.from_object(Config)
 
