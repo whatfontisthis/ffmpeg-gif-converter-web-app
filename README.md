@@ -1,3 +1,6 @@
+(proejct incomplete)
+
+
 # FFmpeg GIF Converter
 
 A simple web application to convert video files into GIFs using **FFmpeg**. Upload a video, customize settings (resolution, frame rate, or time range), and generate your GIF effortlessly.
