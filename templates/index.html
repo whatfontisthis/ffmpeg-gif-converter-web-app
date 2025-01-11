@@ -14,6 +14,15 @@
         <button id="select-file">Choose File</button>
     </div>
 
+    <!-- Video Player (Hidden Initially) -->
+    <div id="video-player-container" style="display: none; margin-top: 20px;">
+        <h3>Uploaded Video</h3>
+        <video id="video-player" controls style="width: 100%; max-width: 600px;">
+            <source id="video-source" src="" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+    </div>
+
     <!-- Conversion Parameters -->
     <div class="conversion-container" id="conversion-container">
         <h3>Set Conversion Parameters</h3>
@@ -43,12 +52,16 @@
         </div>
 
         <!-- Time Inputs -->
-        <div>
-            <label>Time:</label>
-            <div>
-                <button class="btn time-btn selected" onclick="setOption('fullTime', true)" data-key="time">Full</button>
-                <input type="text" id="start-time" placeholder="Start (sec)" onchange="setOption('startTime', this.value)">
-                <input type="text" id="end-time" placeholder="End (sec)" onchange="setOption('endTime', this.value)">
+        <div class="time-control">
+            <label>Time Range:</label>
+            <div class="time-slider-container">
+                <input type="range" id="time-slider" min="0" max="100" value="0" class="time-slider">
+                <div class="time-inputs">
+                    <input type="number" id="start-time" min="0" step="0.1" placeholder="Start (sec)">
+                    <span>to</span>
+                    <input type="number" id="end-time" min="0" step="0.1" placeholder="End (sec)">
+                </div>
+                <button class="btn time-btn" onclick="setFullVideo()">Full Video</button>
             </div>
         </div>
 
@@ -108,6 +121,14 @@
                     const data = await response.json();
                     alert(`File uploaded: ${data.file_path}`);
                     conversionOptions.filePath = data.file_path;
+
+                    // Update video player
+                    const videoPlayerContainer = document.getElementById("video-player-container");
+                    const videoSource = document.getElementById("video-source");
+                    // Set the uploaded video path (Correct - relative URL served by Flask)
+                    videoSource.src = `/${data.file_path}`;
+                    videoPlayerContainer.style.display = "block"; 
+                    document.getElementById("video-player").load();
                 } else {
                     const error = await response.json();
                     alert(`Error: ${error.error}`);
@@ -187,6 +208,19 @@
             if (file) {
                 handleFileUpload(file);
             }
+        });
+
+        // Add video duration tracking
+        document.getElementById('video-player').addEventListener('loadedmetadata', function() {
+            const duration = this.duration;
+            const timeSlider = document.getElementById('time-slider');
+            timeSlider.max = duration;
+            
+            // Update time display as slider moves
+            timeSlider.addEventListener('input', function() {
+                document.getElementById('start-time').value = this.value;
+                setOption('startTime', this.value);
+            });
         });
     </script>
 </body>

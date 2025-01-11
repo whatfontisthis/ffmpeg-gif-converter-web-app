@@ -4,6 +4,14 @@ from flask import Flask, request, render_template, jsonify
 
 app = Flask(__name__)
 
+class Config:
+    UPLOAD_FOLDER = "uploads"
+    OUTPUT_FOLDER = "outputs"
+    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
+    ALLOWED_EXTENSIONS = {'mp4', 'avi', 'mov', 'webm'}
+
+app.config.from_object(Config)
+
 # Set upload and output folders
 UPLOAD_FOLDER = "uploads"
 OUTPUT_FOLDER = "outputs"
@@ -62,7 +70,7 @@ def convert_to_gif():
         "-i",
         video_path,
         "-vf",
-        f"scale={resolution},fps={frame_rate}",
+        f"scale={resolution}:flags=lanczos,fps={frame_rate}",
         "-ss",
         str(start_time),
     ]
