@@ -1,0 +1,80 @@
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #f4f4f9;
+}
+
+.upload-container {
+    width: 50%;
+    max-width: 400px;
+    border: 2px dashed #ccc;
+    padding: 20px;
+    text-align: center;
+    background-color: #fff;
+    border-radius: 8px;
+}
+
+.upload-container.dragover {
+    border-color: #3c82f6;
+    background-color: #eaf3ff;
+}
+
+.upload-container p {
+    margin: 0;
+    font-size: 16px;
+    color: #666;
+}
+
+.upload-container button {
+    margin-top: 10px;
+    padding: 10px 20px;
+    border: none;
+    background-color: #3c82f6;
+    color: #fff;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.upload-container button:hover {
+    background-color: #2a5ca8;
+}
+
+.conversion-container {
+    margin-top: 20px;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: #fff;
+}
+
+.conversion-container label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.btn {
+    margin: 5px;
+    padding: 10px 20px;
+    border: none;
+    background-color: #ccc;
+    color: #000;
+    font-size: 14px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.btn:hover {
+    background-color: #bbb;
+}
+
+.btn.selected {
+    background-color: #3c82f6;
+    color: #fff;
+}

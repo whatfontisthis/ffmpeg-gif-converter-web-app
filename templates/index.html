@@ -4,62 +4,162 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FFmpeg GIF Converter</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f4f4f9;
-        }
-        .upload-container {
-            width: 50%;
-            max-width: 400px;
-            border: 2px dashed #ccc;
-            padding: 20px;
-            text-align: center;
-            background-color: #fff;
-            border-radius: 8px;
-        }
-        .upload-container.dragover {
-            border-color: #3c82f6;
-            background-color: #eaf3ff;
-        }
-        .upload-container p {
-            margin: 0;
-            font-size: 16px;
-            color: #666;
-        }
-        .upload-container button {
-            margin-top: 10px;
-            padding: 10px 20px;
-            border: none;
-            background-color: #3c82f6;
-            color: #fff;
-            font-size: 16px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        .upload-container button:hover {
-            background-color: #2a5ca8;
-        }
-    </style>
+    <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
+    <!-- Upload Container -->
     <div class="upload-container" id="upload-container">
         <p>Drag and drop a video file here, or click to select one</p>
         <input type="file" id="file-input" accept="video/*" hidden />
         <button id="select-file">Choose File</button>
     </div>
 
+    <!-- Conversion Parameters -->
+    <div class="conversion-container" id="conversion-container">
+        <h3>Set Conversion Parameters</h3>
+
+        <!-- Resolution Buttons -->
+        <div>
+            <label>Resolution:</label>
+            <div>
+                <button class="btn resolution-btn selected" onclick="setOption('resolution', '480:-1')" data-key="resolution">480</button>
+                <button class="btn resolution-btn" onclick="setOption('resolution', '320:-1')" data-key="resolution">320</button>
+                <button class="btn resolution-btn" onclick="setOption('resolution', '720:-1')" data-key="resolution">720</button>
+                <button class="btn resolution-btn" onclick="setOption('resolution', '1080:-1')" data-key="resolution">1080</button>
+            </div>
+        </div>
+
+        <!-- Frame Rate Buttons -->
+        <div>
+            <label>Frame Rate:</label>
+            <div>
+                <button class="btn frame-rate-btn selected" onclick="setOption('frameRate', '10')" data-key="frameRate">10</button>
+                <button class="btn frame-rate-btn" onclick="setOption('frameRate', '15')" data-key="frameRate">15</button>
+                <button class="btn frame-rate-btn" onclick="setOption('frameRate', '20')" data-key="frameRate">20</button>
+                <button class="btn frame-rate-btn" onclick="setOption('frameRate', '24')" data-key="frameRate">24</button>
+                <button class="btn frame-rate-btn" onclick="setOption('frameRate', '30')" data-key="frameRate">30</button>
+                <button class="btn frame-rate-btn" onclick="setOption('frameRate', '60')" data-key="frameRate">60</button>
+            </div>
+        </div>
+
+        <!-- Time Inputs -->
+        <div>
+            <label>Time:</label>
+            <div>
+                <button class="btn time-btn selected" onclick="setOption('fullTime', true)" data-key="time">Full</button>
+                <input type="text" id="start-time" placeholder="Start (sec)" onchange="setOption('startTime', this.value)">
+                <input type="text" id="end-time" placeholder="End (sec)" onchange="setOption('endTime', this.value)">
+            </div>
+        </div>
+
+        <!-- Convert Button -->
+        <div>
+            <button id="convert-button" onclick="convertVideo()">Convert to GIF</button>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
     <script>
+        let conversionOptions = {
+            resolution: "480:-1", // Default resolution
+            frameRate: "10", // Default frame rate
+            fullTime: true,
+            startTime: 0,
+            endTime: null,
+            filePath: null, // File path will be set after upload
+        };
+
+        // Function to set selected option and toggle button states
+        function setOption(key, value) {
+            conversionOptions[key] = value;
+
+            // Highlight selected button and reset others
+            const buttons = document.querySelectorAll(`[data-key="${key}"]`);
+            buttons.forEach((btn) => btn.classList.remove("selected"));
+
+            const selectedButton = [...buttons].find((btn) =>
+                btn.onclick.toString().includes(value)
+            );
+            if (selectedButton) {
+                selectedButton.classList.add("selected");
+            }
+
+            // Reset start/end time if "Full" is selected
+            if (key === "fullTime") {
+                conversionOptions.startTime = 0;
+                conversionOptions.endTime = null;
+                document.getElementById("start-time").value = "";
+                document.getElementById("end-time").value = "";
+            }
+        }
+
+        // Handle file upload via drag-and-drop or file input
+        async function handleFileUpload(file) {
+            const formData = new FormData();
+            formData.append("file", file);
+
+            try {
+                const response = await fetch("/upload", {
+                    method: "POST",
+                    body: formData,
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    alert(`File uploaded: ${data.file_path}`);
+                    conversionOptions.filePath = data.file_path;
+                } else {
+                    const error = await response.json();
+                    alert(`Error: ${error.error}`);
+                }
+            } catch (err) {
+                console.error("Upload failed:", err);
+                alert("An error occurred during upload.");
+            }
+        }
+
+        // Convert video to GIF
+        async function convertVideo() {
+            if (!conversionOptions.filePath) {
+                alert("Please upload a video file first.");
+                return;
+            }
+
+            const payload = {
+                file_path: conversionOptions.filePath,
+                resolution: conversionOptions.resolution,
+                frame_rate: parseInt(conversionOptions.frameRate),
+                start_time: parseFloat(conversionOptions.startTime) || 0,
+                end_time: conversionOptions.endTime
+                    ? parseFloat(conversionOptions.endTime)
+                    : null,
+            };
+
+            try {
+                const response = await fetch("/convert", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload),
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    alert(`GIF created: ${data.gif_path}`);
+                } else {
+                    const error = await response.json();
+                    alert(`Error: ${error.error}`);
+                }
+            } catch (err) {
+                console.error("Conversion failed:", err);
+                alert("An error occurred during conversion.");
+            }
+        }
+
+        // Add drag-and-drop functionality
         const uploadContainer = document.getElementById("upload-container");
         const fileInput = document.getElementById("file-input");
         const selectFileButton = document.getElementById("select-file");
 
-        // Drag and Drop Events
         uploadContainer.addEventListener("dragover", (e) => {
             e.preventDefault();
             uploadContainer.classList.add("dragover");
@@ -78,7 +178,6 @@
             }
         });
 
-        // File Input Button
         selectFileButton.addEventListener("click", () => {
             fileInput.click();
         });
@@ -89,65 +188,6 @@
                 handleFileUpload(file);
             }
         });
-
-        // Handle File Upload
-        async function handleFileUpload(file) {
-            const formData = new FormData();
-            formData.append("file", file);
-        
-            try {
-                const response = await fetch("/upload", {
-                    method: "POST",
-                    body: formData,
-                });
-        
-                if (response.ok) {
-                    const data = await response.json();
-                    alert(`File uploaded: ${data.file_path}`);
-                    await convertToGif(data.file_path); // Trigger conversion after upload
-                } else {
-                    const error = await response.json();
-                    alert(`Error: ${error.error}`);
-                }
-            } catch (err) {
-                console.error("Upload failed:", err);
-                alert("An error occurred during upload.");
-            }
-        }
-
-        async function convertToGif(filePath) {
-            const resolution = prompt("Enter resolution (e.g., 320:-1 for default):", "320:-1");
-            const frameRate = prompt("Enter frame rate (e.g., 10):", "10");
-            const startTime = prompt("Enter start time in seconds (e.g., 0):", "0");
-            const endTime = prompt("Enter end time in seconds (leave empty for full length):", "");
-        
-            const payload = {
-                file_path: filePath,
-                resolution: resolution || "320:-1",
-                frame_rate: parseInt(frameRate) || 10,
-                start_time: parseFloat(startTime) || 0,
-                end_time: endTime ? parseFloat(endTime) : null,
-            };
-        
-            try {
-                const response = await fetch("/convert", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload),
-                });
-        
-                if (response.ok) {
-                    const data = await response.json();
-                    alert(`GIF created: ${data.gif_path}`);
-                } else {
-                    const error = await response.json();
-                    alert(`Error: ${error.error}`);
-                }
-            } catch (err) {
-                console.error("Conversion failed:", err);
-                alert("An error occurred during conversion.");
-            }
-        }
     </script>
 </body>
 </html>

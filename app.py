@@ -4,7 +4,7 @@ from flask import Flask, request, render_template, jsonify
 
 app = Flask(__name__)
 
-# Set upload folder
+# Set upload and output folders
 UPLOAD_FOLDER = "uploads"
 OUTPUT_FOLDER = "outputs"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -29,7 +29,7 @@ def upload_file():
     if file.filename == "":
         return jsonify({"error": "No selected file"}), 400
 
-    # Save the file
+    # Save the uploaded file
     file_path = os.path.join(app.config["UPLOAD_FOLDER"], file.filename)
     file.save(file_path)
 
@@ -74,9 +74,11 @@ def convert_to_gif():
 
     # Run FFmpeg command
     try:
-        subprocess.run(command, check=True)
+        subprocess.run(
+            command, check=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE
+        )
     except subprocess.CalledProcessError as e:
-        return jsonify({"error": f"FFmpeg error: {e}"}), 500
+        return jsonify({"error": f"FFmpeg error: {e.stderr.decode('utf-8')}"}), 500
 
     return jsonify({"message": "Conversion successful", "gif_path": output_path}), 200
 
